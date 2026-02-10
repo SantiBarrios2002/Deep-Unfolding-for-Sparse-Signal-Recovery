@@ -10,7 +10,7 @@ int main() {
     // Small problem: n=50, m=25, k=5
     auto prob = unfolding::generate_cs_problem(25, 50, 5, 40.0, 42);
 
-    unfolding::IstaSolver ista(0.1, 500, 1e-8);
+    unfolding::IstaSolver ista(0.01, 1000, 1e-8);
     auto x_hat = ista.solve(prob.y, prob.A);
 
     double nmse = unfolding::nmse_db(x_hat, prob.x);
