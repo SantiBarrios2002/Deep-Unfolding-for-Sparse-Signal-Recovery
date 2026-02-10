@@ -1,0 +1,35 @@
+# Build
+build/
+cmake-build-*/
+
+# Data artifacts
+data/weights/*.bin
+data/results/*.csv
+data/audio/*.wav
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+training/*.pt
+training/*.pth
+
+# External dependencies (fetched by CMake or manually)
+external/eigen/*
+!external/eigen/.gitkeep
+external/AudioFile/*
+!external/AudioFile/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
