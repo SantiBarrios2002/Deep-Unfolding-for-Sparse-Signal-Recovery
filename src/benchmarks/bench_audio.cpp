@@ -1,20 +1,21 @@
 /// Experiment 4: Audio Inpainting Demo
 
 #include <iostream>
+#include <cmath>
 
 #include "applications/audio_inpainter.hpp"
 #include "solvers/ista_solver.hpp"
 #include "solvers/fista_solver.hpp"
 #include "evaluation/metrics.hpp"
 #include "evaluation/timer.hpp"
+#include "utils/csv_writer.hpp"
 #include "utils/config.hpp"
 
 int main() {
     unfolding::Config cfg;
     std::cout << "=== Experiment 4: Audio Inpainting ===\n\n";
 
-    // TODO: Load audio from data/audio/ using wav_io
-    // For now, generate a synthetic test signal (sum of sinusoids)
+    // Generate a synthetic test signal (sum of sinusoids — sparse in DCT domain)
     int N = cfg.audio_sample_rate * 3;  // 3 seconds
     Eigen::VectorXd audio(N);
     for (int i = 0; i < N; ++i) {
@@ -33,23 +34,36 @@ int main() {
     std::cout << "Retained samples: " << mask.sum() << " ("
               << 100.0 * mask.sum() / N << "%)\n\n";
 
+    // CSV output
+    unfolding::CsvWriter csv("data/results/bench_audio.csv");
+    csv.write_header({"method", "nmse_db", "time_s"});
+
     // Recover with ISTA
     {
         unfolding::IstaSolver ista(0.01, 200, 1e-5);
         unfolding::Timer timer("ISTA recovery");
         auto recovered = inpainter.recover(corrupted, mask, ista);
-        double us = timer.stop();
+        double time_s = timer.stop() / 1e6;
 
         double nmse = unfolding::nmse_db(recovered, audio);
-        std::cout << "ISTA recovery: NMSE = " << nmse << " dB, time = "
-                  << us / 1e6 << " s\n";
-
-        // TODO: Write recovered audio to data/audio/recovered_ista.wav
+        std::cout << "ISTA recovery:  NMSE = " << nmse << " dB, time = "
+                  << time_s << " s\n";
+        csv.write_row({"ISTA", std::to_string(nmse), std::to_string(time_s)});
     }
 
-    // TODO: Recover with LISTA (trained weights)
-    // TODO: Write all .wav files for presentation demo
+    // Recover with FISTA
+    {
+        unfolding::FistaSolver fista(0.01, 100, 1e-5);
+        unfolding::Timer timer("FISTA recovery");
+        auto recovered = inpainter.recover(corrupted, mask, fista);
+        double time_s = timer.stop() / 1e6;
 
-    std::cout << "\nDone.\n";
+        double nmse = unfolding::nmse_db(recovered, audio);
+        std::cout << "FISTA recovery: NMSE = " << nmse << " dB, time = "
+                  << time_s << " s\n";
+        csv.write_row({"FISTA", std::to_string(nmse), std::to_string(time_s)});
+    }
+
+    std::cout << "\nResults written to data/results/bench_audio.csv\n";
     return 0;
 }

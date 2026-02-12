@@ -41,14 +41,15 @@ def export_lista_weights(model_path: str, output_path: str):
         f.write(struct.pack("iii", K, n, m))
 
         for k in range(K):
-            # S: nn.Linear stores weight as (out, in) = (n, n)
+            # nn.Linear weight shape: (out, in). Forward: output = input @ weight.T
+            # For column-vector math: output = weight @ input
+            # C++ does: S * c = weight @ c, so we need Eigen S = weight
+            # S.T.tobytes() writes weight in column-major → Eigen reads it as weight
             S = state[f"layers.{k}.S.weight"].numpy().astype(np.float64)
-            # Transpose to column-major for Eigen
-            f.write(S.T.tobytes())
+            f.write(np.ascontiguousarray(S.T).tobytes())
 
-            # W_e: (n, m)
             W_e = state[f"layers.{k}.W_e.weight"].numpy().astype(np.float64)
-            f.write(W_e.T.tobytes())
+            f.write(np.ascontiguousarray(W_e.T).tobytes())
 
             # theta
             theta = state[f"layers.{k}.threshold.theta"].numpy().astype(np.float64)
@@ -78,14 +79,28 @@ def export_alista_weights(model_path: str, output_path: str):
     print(f"Saved to {output_path}")
 
 
+def export_matrix(npy_path: str, output_path: str):
+    """Export a NumPy matrix to binary format for Eigen (column-major)."""
+    A = np.load(npy_path).astype(np.float64)
+    m, n = A.shape
+    print(f"Exporting matrix: {m}x{n}")
+    with open(output_path, "wb") as f:
+        f.write(struct.pack("ii", m, n))
+        # Transpose for column-major (Eigen default)
+        f.write(A.T.tobytes())
+    print(f"Saved to {output_path}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Export weights to binary for C++")
-    parser.add_argument("model_path", help="PyTorch .pt checkpoint")
+    parser.add_argument("model_path", help="PyTorch .pt checkpoint or .npy matrix")
     parser.add_argument("output_path", help="Output binary file")
-    parser.add_argument("--type", choices=["lista", "alista"], default="lista")
+    parser.add_argument("--type", choices=["lista", "alista", "matrix"], default="lista")
     args = parser.parse_args()
 
     if args.type == "lista":
         export_lista_weights(args.model_path, args.output_path)
-    else:
+    elif args.type == "alista":
         export_alista_weights(args.model_path, args.output_path)
+    else:
+        export_matrix(args.model_path, args.output_path)

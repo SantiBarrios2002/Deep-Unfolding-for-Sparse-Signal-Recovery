@@ -21,4 +21,8 @@ struct AlistaParams {
 
 AlistaParams load_alista_weights(const std::string& filepath);
 
+/// Load a matrix from binary file exported by Python
+/// Format: [m, n] (int32) then m×n float64 (column-major)
+Eigen::MatrixXd load_matrix_binary(const std::string& filepath);
+
 }  // namespace unfolding

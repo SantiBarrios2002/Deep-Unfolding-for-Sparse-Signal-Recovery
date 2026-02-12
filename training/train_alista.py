@@ -55,6 +55,7 @@ def train(args):
     _, Y_val, X_val = generate_dataset(
         m=args.m, n=args.n, k=args.k,
         num_samples=args.num_val, snr_db=args.snr_db, seed=123,
+        A=A,  # use same sensing matrix as training
     )
 
     train_ds = TensorDataset(

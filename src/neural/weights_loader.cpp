@@ -51,4 +51,20 @@ AlistaParams load_alista_weights(const std::string& filepath) {
     return params;
 }
 
+Eigen::MatrixXd load_matrix_binary(const std::string& filepath) {
+    std::ifstream f(filepath, std::ios::binary);
+    if (!f.is_open()) {
+        throw std::runtime_error("Cannot open matrix file: " + filepath);
+    }
+
+    int m, n;
+    f.read(reinterpret_cast<char*>(&m), sizeof(int));
+    f.read(reinterpret_cast<char*>(&n), sizeof(int));
+
+    Eigen::MatrixXd A(m, n);
+    f.read(reinterpret_cast<char*>(A.data()), m * n * sizeof(double));
+
+    return A;
+}
+
 }  // namespace unfolding

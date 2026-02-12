@@ -16,6 +16,7 @@ __pycache__/
 venv/
 training/*.pt
 training/*.pth
+training/*.npy
 
 # External dependencies (fetched by CMake or manually)
 external/eigen/*

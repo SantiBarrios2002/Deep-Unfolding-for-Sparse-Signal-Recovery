@@ -29,9 +29,13 @@ def generate_dataset(
     num_samples: int = 10000,
     snr_db: float = 40.0,
     seed: int = 42,
+    A: np.ndarray = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Generate a dataset of (y, x*) pairs for training LISTA/ALISTA.
+
+    Args:
+        A: Optional pre-computed sensing matrix. If None, generates one from seed.
 
     Returns:
         A: sensing matrix (m, n)
@@ -39,7 +43,8 @@ def generate_dataset(
         X: ground truth sparse signals (num_samples, n)
     """
     rng = np.random.default_rng(seed)
-    A = generate_sensing_matrix(m, n, seed)
+    if A is None:
+        A = generate_sensing_matrix(m, n, seed)
 
     X = np.zeros((num_samples, n))
     Y = np.zeros((num_samples, m))
